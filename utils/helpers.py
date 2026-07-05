@@ -26,3 +26,18 @@ def truncate_text(text, max_length=500):
 def validate_linkedin_url(url):
     return "linkedin.com/in/" in url
 
+def extract_post_texts(posts):
+    if not posts:
+        return "No posts found in scraped data."
+    texts = []
+    for i, post in enumerate(posts, 1):
+        if isinstance(post, dict):
+            text = (post.get('text') or post.get('content') or post.get('postText') 
+                    or post.get('description') or post.get('commentary') or post.get('body'))
+            if text:
+                texts.append(f"Post {i}: {text}")
+            else:
+                texts.append(f"Post {i} (raw data, no clear text field found): {post}")
+        else:
+            texts.append(f"Post {i}: {post}")
+    return "\n\n".join(texts)

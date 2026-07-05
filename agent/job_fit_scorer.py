@@ -1,26 +1,23 @@
 from datetime import date
 from tools.claude_client import ask_claude
-from utils.helpers import print_section
+from utils.helpers import print_section, extract_post_texts
 
 def score_job_fit(profile_data, job_description, user_goals, location, conversation_history=None):
     
     today = date.today().strftime("%B %d, %Y")
+    clean_posts = extract_post_texts(profile_data.get('posts', []))
     
-    system_prompt = """You are an expert tech recruiter with deep knowledge of hiring requirements
-    and candidate evaluation. You give honest, specific assessments of how well a candidate
-    matches a job description. Never sugarcoat. If someone isn't ready, tell them exactly what's missing
-    and what to do about it.
+    system_prompt = """You are an expert tech recruiter. You give honest, specific assessments of how well
+    a candidate matches a job description. Never sugarcoat, but never claim something is missing without
+    having actually checked for it first.
     
-    IMPORTANT: You will be given today's actual date. Use it to calculate any timelines mentioned
-    (e.g. months until a target date) — never guess or estimate this.
+    You will be given today's actual date — use it for any timeline math, never guess.
+    Trust the candidate's explicitly stated academic year/status over any date you might infer."""
     
-    If the candidate's stated academic year or status (e.g. 'sophomore') conflicts with dates you might
-    infer from education start/end years, always trust their explicitly stated status over your own inference."""
+    prompt = f"""Today's date is {today}.
     
-    prompt = f"""Today's date is {today}. Evaluate how well this person fits the following job description.
-    
-    Target Role/Goals: {user_goals}
-    Location/Market: {location}
+    CANDIDATE'S ACTUAL LINKEDIN POSTS (read every one before doing anything else):
+    {clean_posts}
     
     CANDIDATE PROFILE:
     - Name: {profile_data.get('full_name', profile_data.get('fullName', 'Unknown'))}
@@ -30,53 +27,41 @@ def score_job_fit(profile_data, job_description, user_goals, location, conversat
     - Experience: {profile_data.get('experiences', [])}
     - Education: {profile_data.get('education', [])}
     - Certifications: {profile_data.get('certifications', [])}
-    - Projects: {profile_data.get('projects', 'Not listed as a dedicated section, check Experience and Posts')}
-    - Recent LinkedIn Posts: {profile_data.get('posts', 'Not available')}
     
-    JOB DESCRIPTION:
+    Target Role/Goals: {user_goals}
+    Location/Market: {location}
+    
+    JOB DESCRIPTION TO EVALUATE AGAINST:
     {job_description}
     
-    BEFORE evaluating fit, complete this mandatory first step:
+    Your response MUST start with this exact required section, in this exact order:
     
-    0. WHAT THEY'VE ALREADY BUILT — Read through Experience, Projects, and every LinkedIn Post in full,
-       word for word. List every real project, tool, or technical work you find evidence of, quoting or
-       referencing the specific post or experience entry it came from. This step is required even if
-       Posts or Experience appear brief — do not proceed to gap analysis until this extraction is complete.
-       If after careful reading there is genuinely nothing there, state that explicitly, but only after
-       having actually checked every field.
+    ## PROJECTS AND TECHNICAL WORK FOUND IN POSTS/EXPERIENCE
+    List every project or technical work mentioned above, quoting the specific sentence it came from.
+    If genuinely none exists after reading everything above, write "No technical projects found in posts
+    or experience" — but you may only write that after this section actually appears.
     
-    Then provide the full job fit analysis:
+    Only after completing that section, continue with the full analysis:
     
-    1. FIT SCORE (X/10)
-       - Overall match score with brief justification
-       - Should they apply? Yes/No/Maybe with clear reasoning
+    ## 1. FIT SCORE (X/10)
+    Overall match score with brief justification. Should they apply? Yes/No/Maybe.
     
-    2. REQUIREMENTS THEY MEET
-       - List every requirement from the job description they currently satisfy
-       - How strongly they meet each one, referencing what you found in step 0
+    ## 2. REQUIREMENTS THEY MEET
+    List every requirement they satisfy, referencing the projects found above where relevant.
     
-    3. REQUIREMENTS THEY ARE MISSING
-       - List every requirement they don't meet
-       - For each missing requirement: how long would it take to acquire it (using today's date for any calculations)
+    ## 3. REQUIREMENTS THEY ARE MISSING
+    List every gap. For each: realistic time to close it, calculated using today's date.
     
-    4. HOW TO POSITION THEMSELVES
-       - What to highlight in their application for this specific role, based on what you found in step 0
-       - How to rewrite their headline for this job
-       - What to emphasize in their cover letter
-       - Which projects or experiences to lead with
+    ## 4. HOW TO POSITION THEMSELVES
+    What to highlight, headline rewrite, cover letter angle, which projects to lead with.
     
-    5. APPLICATION DECISION
-       - Clear recommendation: apply now, apply after improvements, or skip
-       - If apply after improvements: exactly what to fix first and how long it takes (calculated from today's date)
-       - If skip: what similar roles are a better fit right now
+    ## 5. APPLICATION DECISION
+    Apply now / apply after improvements / skip. Be specific about the timeline, using today's date.
     
-    6. TAILORING TIPS
-       - Specific keywords from the job description to add to their LinkedIn
-       - How to reframe existing experience to match this role
-       - What to mention in the first paragraph of their cover letter
+    ## 6. TAILORING TIPS
+    Keywords to add, how to reframe experience, cover letter opening line.
     
-    Be specific. Reference actual requirements from the job description and the actual projects/posts
-    you identified in step 0. All timeline calculations must be based on today's actual date given above."""
+    Do not skip the required first section under any circumstances."""
     
     print_section("Scoring Job Fit")
     response = ask_claude(prompt, system_prompt=system_prompt, conversation_history=conversation_history)
