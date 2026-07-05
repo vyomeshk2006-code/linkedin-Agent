@@ -58,22 +58,28 @@ def setup_user_info():
 
 
 def render_followup(tab_key, user_id):
-    """Reusable follow-up question box for any tab."""
+    """Reusable follow-up question box for any tab — isolated conversation per tab."""
+    state_key = f"{tab_key}_messages"
+    if state_key not in st.session_state:
+        st.session_state[state_key] = []
+
     st.markdown("---")
     st.markdown("**💬 Have a follow-up question about this?**")
     followup = st.text_input("Ask a follow-up question", key=f"followup_input_{tab_key}")
 
     if st.button("Ask", key=f"followup_btn_{tab_key}"):
         if followup:
-            add_to_conversation(user_id, "user", followup)
-            history = get_conversation_history(user_id)
+            st.session_state[state_key].append({"role": "user", "content": followup})
             with st.spinner("Thinking..."):
-                response = ask_claude(followup, conversation_history=history)
-            add_to_conversation(user_id, "assistant", response)
-            st.session_state[f"followup_response_{tab_key}"] = response
+                response = ask_claude(followup, conversation_history=st.session_state[state_key])
+            st.session_state[state_key].append({"role": "assistant", "content": response})
+            st.rerun()
 
-    if f"followup_response_{tab_key}" in st.session_state:
-        st.markdown(st.session_state[f"followup_response_{tab_key}"])
+    for msg in st.session_state[state_key]:
+        if msg["role"] == "user":
+            st.markdown(f"**You:** {msg['content']}")
+        else:
+            st.markdown(f"**Agent:** {msg['content']}")
 
 
 def main():
@@ -110,7 +116,6 @@ def main():
         "name": name
     })
 
-    # ---- persist profile_data across reruns ----
     if "profile_data" not in st.session_state:
         st.session_state.profile_data = session.get("profile_data")
 
@@ -151,9 +156,8 @@ def main():
             if not st.session_state.profile_data:
                 st.warning("⚠️ Please analyze your profile first (Profile Analysis tab)")
             else:
-                conversation_history = get_conversation_history(user_id)
                 with st.spinner("Building your personalized roadmap..."):
-                    response = generate_roadmap(st.session_state.profile_data, goals, location, conversation_history)
+                    response = generate_roadmap(st.session_state.profile_data, goals, location, None)
                 st.session_state.roadmap_response = response
                 add_to_conversation(user_id, "user", "Generate my career roadmap")
                 add_to_conversation(user_id, "assistant", response)
@@ -200,9 +204,8 @@ def main():
             if not st.session_state.profile_data:
                 st.warning("⚠️ Please analyze your profile first (Profile Analysis tab)")
             else:
-                conversation_history = get_conversation_history(user_id)
                 with st.spinner("Finding internship opportunities..."):
-                    response = find_internships(st.session_state.profile_data, goals, location, conversation_history)
+                    response = find_internships(st.session_state.profile_data, goals, location, None)
                 st.session_state.internship_response = response
                 add_to_conversation(user_id, "user", "Find internship opportunities")
                 add_to_conversation(user_id, "assistant", response)
@@ -223,9 +226,8 @@ def main():
             elif not job_description:
                 st.warning("⚠️ Please paste a job description")
             else:
-                conversation_history = get_conversation_history(user_id)
                 with st.spinner("Scoring your job fit..."):
-                    response = score_job_fit(st.session_state.profile_data, job_description, goals, location, conversation_history)
+                    response = score_job_fit(st.session_state.profile_data, job_description, goals, location, None)
                 st.session_state.jobfit_response = response
                 add_to_conversation(user_id, "user", "Score job fit")
                 add_to_conversation(user_id, "assistant", response)
@@ -246,9 +248,8 @@ def main():
                 st.warning("⚠️ Please describe your achievement")
             else:
                 profile_for_post = st.session_state.profile_data or {"fullName": name}
-                conversation_history = get_conversation_history(user_id)
                 with st.spinner("Drafting your LinkedIn post..."):
-                    response = draft_linkedin_post(profile_for_post, achievement, post_type, conversation_history)
+                    response = draft_linkedin_post(profile_for_post, achievement, post_type, None)
                 st.session_state.post_response = response
                 add_to_conversation(user_id, "user", f"Draft LinkedIn post about: {achievement}")
                 add_to_conversation(user_id, "assistant", response)
@@ -263,18 +264,18 @@ def main():
 
         if "career_discovery_active" not in st.session_state:
             st.session_state.career_discovery_active = False
+        if "career_discovery_messages" not in st.session_state:
+            st.session_state.career_discovery_messages = []
 
         if not st.session_state.career_discovery_active:
             if st.button("🧭 Start Career Discovery", type="primary", key="career"):
                 st.session_state.career_discovery_active = True
-                conversation_history = get_conversation_history(user_id)
                 with st.spinner("Starting career discovery..."):
-                    response = start_career_discovery(conversation_history)
-                add_to_conversation(user_id, "assistant", response)
+                    response = start_career_discovery()
+                st.session_state.career_discovery_messages.append({"role": "assistant", "content": response})
                 st.rerun()
         else:
-            conversation_history = get_conversation_history(user_id)
-            for msg in conversation_history[-10:]:
+            for msg in st.session_state.career_discovery_messages:
                 if msg["role"] == "user":
                     st.markdown(f"**You:** {msg['content']}")
                 else:
@@ -285,15 +286,15 @@ def main():
             with col1:
                 if st.button("Send", key="send_career"):
                     if user_input:
-                        add_to_conversation(user_id, "user", user_input)
-                        conversation_history = get_conversation_history(user_id)
+                        st.session_state.career_discovery_messages.append({"role": "user", "content": user_input})
                         with st.spinner("Thinking..."):
-                            response = process_career_answer(user_input, conversation_history)
-                        add_to_conversation(user_id, "assistant", response)
+                            response = process_career_answer(user_input, st.session_state.career_discovery_messages)
+                        st.session_state.career_discovery_messages.append({"role": "assistant", "content": response})
                         st.rerun()
             with col2:
                 if st.button("End Discovery", key="end_career"):
                     st.session_state.career_discovery_active = False
+                    st.session_state.career_discovery_messages = []
                     st.rerun()
 
 
