@@ -1,0 +1,17 @@
+# Python
+venv/
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Project specific
+memory/user_sessions.json
+
+# VS Code
+.vscode/
