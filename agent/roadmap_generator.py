@@ -2,10 +2,15 @@ from tools.claude_client import ask_claude
 from utils.helpers import print_section
 
 def generate_roadmap(profile_data, user_goals, location, conversation_history=None):
+    
     system_prompt = """You are an expert career strategist and technical mentor with deep knowledge 
     of the tech industry, hiring requirements, and skill development paths.
     You create specific, actionable roadmaps tailored to each person's current situation and target role.
-    Always recommend specific resources, not generic ones."""
+    Always recommend specific resources, not generic ones.
+    
+    IMPORTANT: Carefully calculate any timelines using today's actual date. Carefully read the Experience,
+    Projects, and Posts sections in full before claiming something is 'missing' — project experience is
+    often described within Experience entries or LinkedIn posts, not only in a dedicated Projects section."""
     
     prompt = f"""Based on this person's profile and goals, create a detailed career roadmap.
     
@@ -13,12 +18,15 @@ def generate_roadmap(profile_data, user_goals, location, conversation_history=No
     Location/Market: {location}
     
     Current Profile Summary:
-    - Name: {profile_data.get('fullName', 'Unknown')}
+    - Name: {profile_data.get('full_name', profile_data.get('fullName', 'Unknown'))}
     - Current Headline: {profile_data.get('headline', 'Not provided')}
+    - Summary/About: {profile_data.get('summary', 'Not provided')}
     - Skills: {profile_data.get('skills', [])}
     - Experience: {profile_data.get('experiences', [])}
     - Education: {profile_data.get('education', [])}
     - Certifications: {profile_data.get('certifications', [])}
+    - Projects: {profile_data.get('projects', 'Not listed as a dedicated section, check Experience and Posts')}
+    - Recent LinkedIn Posts: {profile_data.get('posts', 'Not available')}
     
     Create a comprehensive roadmap with the following:
     
@@ -51,7 +59,10 @@ def generate_roadmap(profile_data, user_goals, location, conversation_history=No
        - How many hours per week to dedicate to each area
     
     Be extremely specific. Name actual certifications, actual projects, actual resources.
-    No generic advice like 'learn Python' — say exactly what to learn and where."""
+    No generic advice like 'learn Python' — say exactly what to learn and where.
+    Double check any date-based timeline calculations against today's actual date."""
+    
     print_section("Generating Your Roadmap")
     response = ask_claude(prompt, system_prompt=system_prompt, conversation_history=conversation_history)
+    
     return response

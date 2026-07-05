@@ -8,24 +8,29 @@ def analyze_profile(linkedin_url, user_goals, location):
     print("Fetching profile data, please wait...")
 
     profile_data = scrape_linkedin_profile(linkedin_url)
-    print("Fetching your posts, please wait...")
-    posts_data = scrape_linkedin_posts(linkedin_url)
 
     if not profile_data:
         return None, "Failed to scrape LinkedIn profile. Please check the URL and try again."
-    
+
+    print("Fetching your posts, please wait...")
+    posts_data = scrape_linkedin_posts(linkedin_url)
+
+    profile_data["posts"] = posts_data if posts_data else []
+
     formatted_profile = format_profile_for_claude(profile_data)
-    formatted_posts = format_profile_for_claude(posts_data) if posts_data else "No posts found"
+
     system_prompt = """You are an expert LinkedIn career coach and recruiter with 10+ years of experience. 
     You analyze LinkedIn profiles and provide specific, actionable feedback to help people land their target roles.
-    Always be direct, honest, and specific. Never give generic advice."""
+    Always be direct, honest, and specific. Never give generic advice.
+    
+    IMPORTANT: Carefully calculate any timelines using today's actual date. Carefully read every field provided,
+    including experience descriptions and posts, before claiming something is missing."""
+
     prompt = f"""Analyze this LinkedIn profile for someone targeting: {user_goals}
     Location/Market: {location}
     
-    Profile Data:
+    Profile Data (includes posts):
     {formatted_profile}
-    Recent LinkedIn Posts:
-    {formatted_posts}
     
     Provide a comprehensive analysis with the following sections:
     
@@ -73,11 +78,10 @@ def analyze_profile(linkedin_url, user_goals, location):
        - Events, conferences, or meetups to attend
        - Any other activities that would strengthen their candidacy
     
-    Be specific. Reference actual content from their profile.
+    Be specific. Reference actual content from their profile, including posts and experience descriptions.
     No generic advice. Every recommendation must be tailored to their specific profile and target role."""
 
     print_section("Analyzing Your Profile")
     response = ask_claude(prompt, system_prompt=system_prompt)
 
     return profile_data, response
-

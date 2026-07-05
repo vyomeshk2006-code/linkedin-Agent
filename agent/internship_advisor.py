@@ -6,7 +6,11 @@ def find_internships(profile_data, user_goals, location, conversation_history=No
     system_prompt = """You are an expert tech recruiter and internship advisor with deep knowledge
     of the tech industry hiring landscape, internship programs, and eligibility requirements.
     You give realistic, honest assessments of a candidate's eligibility for specific programs.
-    Never sugarcoat. If someone isn't ready for a role, tell them exactly what's missing."""
+    Never sugarcoat. If someone isn't ready for a role, tell them exactly what's missing.
+    
+    IMPORTANT: Carefully calculate any timelines using today's actual date. Carefully read the Experience,
+    Projects, and Posts sections in full before claiming something is 'missing' — project experience is
+    often described within Experience entries or LinkedIn posts, not only in a dedicated Projects section."""
     
     prompt = f"""Based on this person's profile, assess their internship eligibility and recommend opportunities.
     
@@ -14,12 +18,15 @@ def find_internships(profile_data, user_goals, location, conversation_history=No
     Location/Market: {location}
     
     Current Profile:
-    - Name: {profile_data.get('fullName', 'Unknown')}
+    - Name: {profile_data.get('full_name', profile_data.get('fullName', 'Unknown'))}
     - Headline: {profile_data.get('headline', 'Not provided')}
+    - Summary/About: {profile_data.get('summary', 'Not provided')}
     - Skills: {profile_data.get('skills', [])}
     - Experience: {profile_data.get('experiences', [])}
     - Education: {profile_data.get('education', [])}
     - Certifications: {profile_data.get('certifications', [])}
+    - Projects: {profile_data.get('projects', 'Not listed as a dedicated section, check Experience and Posts')}
+    - Recent LinkedIn Posts: {profile_data.get('posts', 'Not available')}
     
     Provide a detailed internship eligibility report:
     
@@ -54,7 +61,8 @@ def find_internships(profile_data, user_goals, location, conversation_history=No
        - Who to reach out to on LinkedIn for referrals
     
     Be specific with company names, program names, and requirements.
-    Consider their location and visa status if mentioned."""
+    Consider their location and visa status if mentioned.
+    Double check any date-based timeline calculations against today's actual date."""
     
     print_section("Finding Internship Opportunities")
     response = ask_claude(prompt, system_prompt=system_prompt, conversation_history=conversation_history)

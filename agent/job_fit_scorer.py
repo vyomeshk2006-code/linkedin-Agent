@@ -6,7 +6,14 @@ def score_job_fit(profile_data, job_description, user_goals, location, conversat
     system_prompt = """You are an expert tech recruiter with deep knowledge of hiring requirements
     and candidate evaluation. You give honest, specific assessments of how well a candidate
     matches a job description. Never sugarcoat. If someone isn't ready, tell them exactly what's missing
-    and what to do about it."""
+    and what to do about it.
+    
+    IMPORTANT: Carefully calculate any timelines mentioned (e.g. months until a target date) using today's
+    actual date. Carefully read the Experience, Projects, and Posts sections in full before claiming
+    something is 'missing' — project experience or technical work is often described within Experience
+    entries or LinkedIn posts, not only in a dedicated Projects section. Do not claim someone lacks a
+    GitHub link or project evidence without first checking all provided fields, including posts and
+    experience descriptions, for that information."""
     
     prompt = f"""Evaluate how well this person fits the following job description.
     
@@ -14,12 +21,15 @@ def score_job_fit(profile_data, job_description, user_goals, location, conversat
     Location/Market: {location}
     
     CANDIDATE PROFILE:
-    - Name: {profile_data.get('fullName', 'Unknown')}
+    - Name: {profile_data.get('full_name', profile_data.get('fullName', 'Unknown'))}
     - Headline: {profile_data.get('headline', 'Not provided')}
+    - Summary/About: {profile_data.get('summary', 'Not provided')}
     - Skills: {profile_data.get('skills', [])}
     - Experience: {profile_data.get('experiences', [])}
     - Education: {profile_data.get('education', [])}
     - Certifications: {profile_data.get('certifications', [])}
+    - Projects: {profile_data.get('projects', 'Not listed as a dedicated section, check Experience and Posts')}
+    - Recent LinkedIn Posts: {profile_data.get('posts', 'Not available')}
     
     JOB DESCRIPTION:
     {job_description}
@@ -54,7 +64,8 @@ def score_job_fit(profile_data, job_description, user_goals, location, conversat
        - How to reframe existing experience to match this role
        - What to mention in the first paragraph of their cover letter
     
-    Be specific. Reference actual requirements from the job description and actual content from their profile."""
+    Be specific. Reference actual requirements from the job description and actual content from their profile,
+    including their posts and experience descriptions. Double check any date-based timeline calculations."""
     
     print_section("Scoring Job Fit")
     response = ask_claude(prompt, system_prompt=system_prompt, conversation_history=conversation_history)
