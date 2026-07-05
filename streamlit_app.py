@@ -65,9 +65,11 @@ def render_followup(tab_key, user_id):
 
     st.markdown("---")
     st.markdown("**💬 Have a follow-up question about this?**")
-    followup = st.text_input("Ask a follow-up question", key=f"followup_input_{tab_key}")
 
-    if st.button("Ask", key=f"followup_btn_{tab_key}"):
+    input_key = f"followup_input_{tab_key}_{len(st.session_state[state_key])}"
+    followup = st.text_input("Ask a follow-up question", key=input_key)
+
+    if st.button("Ask", key=f"followup_btn_{tab_key}_{len(st.session_state[state_key])}"):
         if followup:
             st.session_state[state_key].append({"role": "user", "content": followup})
             with st.spinner("Thinking..."):
@@ -76,9 +78,7 @@ def render_followup(tab_key, user_id):
             st.rerun()
 
     for msg in st.session_state[state_key]:
-        if msg["role"] == "user":
-            st.markdown(f"**You:** {msg['content']}")
-        else:
+        if msg["role"] == "assistant":
             st.markdown(f"**Agent:** {msg['content']}")
 
 
@@ -276,15 +276,14 @@ def main():
                 st.rerun()
         else:
             for msg in st.session_state.career_discovery_messages:
-                if msg["role"] == "user":
-                    st.markdown(f"**You:** {msg['content']}")
-                else:
+                if msg["role"] == "assistant":
                     st.markdown(f"**Agent:** {msg['content']}")
 
-            user_input = st.text_input("Your answer:", key="career_input")
+            input_key = f"career_input_{len(st.session_state.career_discovery_messages)}"
+            user_input = st.text_input("Your answer:", key=input_key)
             col1, col2 = st.columns([1, 4])
             with col1:
-                if st.button("Send", key="send_career"):
+                if st.button("Send", key=f"send_career_{len(st.session_state.career_discovery_messages)}"):
                     if user_input:
                         st.session_state.career_discovery_messages.append({"role": "user", "content": user_input})
                         with st.spinner("Thinking..."):
