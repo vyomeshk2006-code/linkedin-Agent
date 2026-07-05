@@ -5,8 +5,11 @@ MEMORY_FILE = "memory/user_sessions.json"
 
 def load_memory():
     if os.path.exists(MEMORY_FILE):
-        with open(MEMORY_FILE,"r") as f:
-            return json.load(f)
+        try:
+            with open(MEMORY_FILE, "r") as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            return {}
     return {}
 
 def save_memory(data):
