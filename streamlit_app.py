@@ -78,7 +78,9 @@ def render_followup(tab_key, user_id):
             st.rerun()
 
     for msg in st.session_state[state_key]:
-        if msg["role"] == "assistant":
+        if msg["role"] == "user":
+            st.markdown(f"**You:** {msg['content']}")
+        else:
             st.markdown(f"**Agent:** {msg['content']}")
 
 
@@ -218,7 +220,7 @@ def main():
         st.subheader("✅ Job Fit Scorer")
         st.markdown("Paste a job description and find out exactly how well you match it.")
 
-        job_description = st.text_area("Paste Job Description Here", placeholder="Copy and paste the full job description...", height=200)
+        job_description = st.text_area("Paste Job Description Here", height=200)
 
         if st.button("✅ Score My Fit", type="primary", key="jobfit"):
             if not st.session_state.profile_data:
@@ -240,12 +242,15 @@ def main():
         st.subheader("✍️ Draft LinkedIn Post")
         st.markdown("Tell us what you achieved and we'll write a LinkedIn post that gets engagement.")
 
-        achievement = st.text_input("What did you achieve?", placeholder="Completed Google AI Essentials certification")
+        achievement = st.text_area(
+            "What did you achieve? Be specific — what you built, learned, or accomplished, and details that matter (tech used, challenges, results).",
+            height=120
+        )
         post_type = st.selectbox("Post Type", ["certification", "project", "milestone", "learning"])
 
         if st.button("✍️ Draft My Post", type="primary", key="post"):
             if not achievement:
-                st.warning("⚠️ Please describe your achievement")
+                st.warning("⚠️ Please describe your achievement with some detail — the more specific, the better the post.")
             else:
                 profile_for_post = st.session_state.profile_data or {"fullName": name}
                 with st.spinner("Drafting your LinkedIn post..."):
@@ -276,7 +281,9 @@ def main():
                 st.rerun()
         else:
             for msg in st.session_state.career_discovery_messages:
-                if msg["role"] == "assistant":
+                if msg["role"] == "user":
+                    st.markdown(f"**You:** {msg['content']}")
+                else:
                     st.markdown(f"**Agent:** {msg['content']}")
 
             input_key = f"career_input_{len(st.session_state.career_discovery_messages)}"
