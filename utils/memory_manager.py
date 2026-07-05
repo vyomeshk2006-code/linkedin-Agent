@@ -10,7 +10,8 @@ def load_memory():
     return {}
 
 def save_memory(data):
-    with open (MEMORY_FILE,"w") as f:
+    os.makedirs(os.path.dirname(MEMORY_FILE), exist_ok=True)
+    with open(MEMORY_FILE, "w") as f:
         json.dump(data, f, indent=2)
 
 def get_user_session(user_id):
