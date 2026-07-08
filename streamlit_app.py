@@ -14,7 +14,6 @@ from utils.memory_manager import (
 from utils.helpers import validate_linkedin_url
 from agent.profile_analyzer import analyze_profile
 from agent.roadmap_generator import generate_roadmap
-from agent.competitor_analyzer import analyze_competitors
 from agent.content_assistant import draft_linkedin_post
 from agent.career_advisor import start_career_discovery, process_career_answer
 from agent.internship_advisor import find_internships
@@ -123,9 +122,10 @@ def main():
 
     st.markdown("---")
     st.subheader("🚀 What would you like to do?")
+    st.info("💡 Start with **Profile Analysis** first — it powers every other feature below.")
 
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-        "📊 Profile Analysis", "🗺️ Career Roadmap", "🔍 Competitor Analysis",
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+        "📊 Profile Analysis", "🗺️ Career Roadmap",
         "💼 Internships", "✅ Job Fit Score", "✍️ Draft Post", "🧭 Career Discovery"
     ])
 
@@ -171,36 +171,6 @@ def main():
             render_followup("roadmap", user_id)
 
     with tab3:
-        st.subheader("🔍 Competitor Analysis")
-        st.markdown("Compare your profile against competitors and find out how to outpace them.")
-
-        competitor_input = st.text_area(
-            "Enter competitor LinkedIn URLs (one per line)",
-            placeholder="https://www.linkedin.com/in/competitor1\nhttps://www.linkedin.com/in/competitor2"
-        )
-
-        if st.button("🔍 Analyze Competitors", type="primary", key="competitors"):
-            if not st.session_state.profile_data:
-                st.warning("⚠️ Please analyze your profile first (Profile Analysis tab)")
-            elif not competitor_input:
-                st.warning("⚠️ Please enter at least one competitor URL")
-            else:
-                competitor_urls = [url.strip() for url in competitor_input.split("\n") if url.strip()]
-                valid_urls = [url for url in competitor_urls if validate_linkedin_url(url)]
-                if not valid_urls:
-                    st.error("❌ No valid LinkedIn URLs found")
-                else:
-                    with st.spinner(f"Scraping {len(valid_urls)} competitor profiles..."):
-                        response = analyze_competitors(st.session_state.profile_data, goals, valid_urls, location)
-                    st.session_state.competitor_response = response
-                    add_to_conversation(user_id, "user", "Analyze my competitors")
-                    add_to_conversation(user_id, "assistant", response)
-
-        if "competitor_response" in st.session_state:
-            st.markdown(st.session_state.competitor_response)
-            render_followup("competitor", user_id)
-
-    with tab4:
         st.subheader("💼 Internship Opportunities")
         st.markdown("Find internships you're eligible for right now and what you need for your dream companies.")
 
@@ -218,7 +188,7 @@ def main():
             st.markdown(st.session_state.internship_response)
             render_followup("internship", user_id)
 
-    with tab5:
+    with tab4:
         st.subheader("✅ Job Fit Scorer")
         st.markdown("Paste a job description and find out exactly how well you match it — plus what to fix before you apply.")
 
@@ -240,7 +210,7 @@ def main():
             st.markdown(st.session_state.jobfit_response)
             render_followup("jobfit", user_id)
 
-    with tab6:
+    with tab5:
         st.subheader("✍️ Draft LinkedIn Post")
         st.markdown("Tell us what you achieved and we'll write a LinkedIn post that gets engagement.")
 
@@ -265,7 +235,7 @@ def main():
             st.markdown(st.session_state.post_response)
             render_followup("post", user_id)
 
-    with tab7:
+    with tab6:
         st.subheader("🧭 Career Discovery")
         st.markdown("Not sure what career path to pursue? Let our AI career counselor guide you through a conversation.")
 
