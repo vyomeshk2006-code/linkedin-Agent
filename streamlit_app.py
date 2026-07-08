@@ -138,6 +138,8 @@ def main():
                 profile_data, response = analyze_profile(linkedin_url, goals, location)
 
             if profile_data:
+                if not profile_data.get("posts") and st.session_state.profile_data and st.session_state.profile_data.get("posts"):
+                    profile_data["posts"] = st.session_state.profile_data["posts"]
                 st.session_state.profile_data = profile_data
                 st.session_state.profile_analysis_response = response
                 update_user_session(user_id, {"profile_data": profile_data})
@@ -218,7 +220,7 @@ def main():
 
     with tab5:
         st.subheader("✅ Job Fit Scorer")
-        st.markdown("Paste a job description and find out exactly how well you match it.")
+        st.markdown("Paste a job description and find out exactly how well you match it — plus what to fix before you apply.")
 
         job_description = st.text_area("Paste Job Description Here", height=200)
 
