@@ -48,11 +48,11 @@ def setup_user_info():
     st.subheader("👤 Your Profile")
     col1, col2 = st.columns(2)
     with col1:
-        name = st.text_input("Your Name", placeholder="Vyomesh Kumar")
-        linkedin_url = st.text_input("LinkedIn Profile URL", placeholder="https://www.linkedin.com/in/yourprofile")
+        name = st.text_input("Your Name")
+        linkedin_url = st.text_input("LinkedIn Profile URL")
     with col2:
-        goals = st.text_input("Target Role/Goal", placeholder="AI Engineering Internship by 2027")
-        location = st.text_input("Target Job Market", placeholder="United States / Tampa, FL")
+        goals = st.text_input("Target Role/Goal")
+        location = st.text_input("Target Job Market / City-Country")
     return name, linkedin_url, goals, location
 
 
